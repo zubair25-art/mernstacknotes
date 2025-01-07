@@ -4,14 +4,8 @@ import UserModal from "../models/user";
 import bcrypt from "bcrypt";
 
 export const getAuthenticatedUser: RequestHandler = async (req, res, next) => {
-    const authenticateUserId = req.session.userId;
-
     try {
-        if (!authenticateUserId) {
-            throw createHttpError(401, "User not authenticated");
-        }
-
-        const user = await UserModal.findById(authenticateUserId).select("+email").exec();
+        const user = await UserModal.findById(req.session.userId).select("+email").exec();
         res.status(200).json(user);
     } catch (error) {
         next(error);
@@ -35,7 +29,7 @@ export const signUp: RequestHandler<unknown, unknown, SignUpBody, unknown> = asy
         }
         const existingUsername = await UserModal.findOne({username: username}).exec();
         if (existingUsername) {
-            throw createHttpError(409, " Username Already taken please take  different Username or log in instead");
+            throw createHttpError(409, " Username Already taken please choose  different Username or log in instead");
         }
         const existingEmail = await UserModal.findOne({email: email}). exec();
         if (existingEmail) {
