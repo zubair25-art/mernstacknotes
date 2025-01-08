@@ -4,17 +4,51 @@ import createHttpError from "http-errors";
 import mongoose from "mongoose";
 import { assertIsDefined } from "../util/assertIsDefined";
 
+// export const getNotes: RequestHandler = async (req, res, next) => {
+//     const authenticatedUserId = req.session.userId;
+//   try {
+//       assertIsDefined(authenticatedUserId);
+
+//       const notes = await NoteModel.find({userId: authenticatedUserId}).exec();
+//       res.status(200).json(notes);
+//   } catch (error) {
+//     next(error);
+//   }
+// };
+
 export const getNotes: RequestHandler = async (req, res, next) => {
     const authenticatedUserId = req.session.userId;
-  try {
+    try {
       assertIsDefined(authenticatedUserId);
+  
+      const page = parseInt(req.query.page as string) || 1; 
+      const limit = 6; 
+      const skip = (page - 1) * limit;
+  
+      
+      const notes = await NoteModel.find({ userId: authenticatedUserId })
+        .skip(skip)
+        .limit(limit)
+        .exec();
+  
+      
+      const totalNotes = await NoteModel.countDocuments({ userId: authenticatedUserId });
+  
+      
+      const totalPages = Math.ceil(totalNotes / limit);
 
-      const notes = await NoteModel.find({userId: authenticatedUserId}).exec();
-      res.status(200).json(notes);
-  } catch (error) {
-    next(error);
-  }
-};
+      res.status(200).json({
+        notes,         
+        page,          
+        totalPages,    
+        totalNotes,    
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+  
+  
 
 export const getNote: RequestHandler = async (req, res, next) => {
     const noteId = req.params.noteId;

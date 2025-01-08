@@ -63,11 +63,21 @@ export async function logout() {
     await fetchData("/api/users/logout", {method: "POST"});
 }
 
-export async function fetchNotes(): Promise<Note[]> {
-    const response =  await fetch("/api/notes", {method: "GET"});
-    return  response.json();
+// export async function fetchNotes(): Promise<Note[]> {
+//     const response =  await fetch("/api/notes", {method: "GET"});
+//     return  response.json();
     
-}
+// }
+
+export async function fetchNotes(page: number): Promise<{ notes: Note[], totalPages: number }> {
+    const response = await fetch(`/api/notes?page=${page}`, { method: "GET" });
+    if (!response.ok) {
+      throw new Error("Failed to fetch notes");
+    }
+    return response.json();
+  }
+  
+
 
 export interface NoteInput {
     title: string,

@@ -7,6 +7,7 @@ import styles from "../styles/NotesPage.module.css";
 import styleUtils from "../styles/utils.module.css";
 import AddEditNoteDialog from "./AddEditNoteDialog";
 import Note from "./Note";
+// import * as clapsSound from "../sounds"
 
 const NotesPageLoggedInView = () => {
       const [notes, setNotes] = useState<NoteModel[]>([]);
@@ -16,22 +17,34 @@ const NotesPageLoggedInView = () => {
       const [showAddNoteDialog, setShowAddNoteDialog] = useState(false);
       const [noteToEdit, setNoteToEdit] = useState<NoteModel | null>(null);
 
+      const [currentPage, setCurrentPage] =  useState(1);
+      const [totalPages, setTotalPages]   = useState(1);
+
+      // const playClapSound = () => {
+      //   const audio = new Audio(clapsSound); 
+      //   audio.play();
+      // };
+
       useEffect(() => {
         async function loadNotes() {
           try {
               setShowNotesLoadingError(false);
               setNotesLoading(true);
-              const notes = await NotesApi.fetchNotes();
-              setNotes(notes);
+              // const notes = await NotesApi.fetchNotes();
+              const response = await NotesApi.fetchNotes(currentPage);
+              // setNotes(notes);
+              setNotes(response.notes);
+              setTotalPages(response.totalPages);
           } catch (error) {
               console.error(error);
-              alert(error);
+              // alert(error);
+              setShowNotesLoadingError(true);
           } finally {
              setNotesLoading(false);
           }
         }
         loadNotes();
-      }, []);
+      }, [currentPage]);
     
       async function deleteNote(note: NoteModel) {
         try {
@@ -43,7 +56,7 @@ const NotesPageLoggedInView = () => {
         }
       }
     
-      const notesGrid = 
+      const notesGrid = (
          <Row xs={1} md={2} className={`g-4 ${styles.notesGrid}`}>
             {notes.map((note) => (
                 <Col key={note._id}>
@@ -56,7 +69,23 @@ const NotesPageLoggedInView = () => {
                 </Col> 
             ))}
          </Row>
-    
+      );
+
+      const  handleNextPage = () => {
+        if (currentPage <totalPages) {
+          setCurrentPage((prevPage) => prevPage + 1);
+          // playClapSound();
+        }  
+      };
+
+      const handlePrevPage = () => {
+        if (currentPage > 1) {
+          setCurrentPage((prevPage) => prevPage -1);
+          // playClapSound();
+        } 
+      };
+
+
   return (
     <>
       <Button
@@ -72,7 +101,33 @@ const NotesPageLoggedInView = () => {
       )}
       {!notesLoading && !showNotesLoadingError && (
         <>
-          {notes.length > 0 ? notesGrid : <p>you don't have any Notes Yet</p>}
+          {notes.length > 0 ? (
+          <>
+          {notesGrid} 
+          {/* Pagination Controls */}
+          <div className={styles.paginationControls}>
+             <Button
+                 onClick={handlePrevPage}
+                 disabled={currentPage === 1}
+                 className="me-2"
+                 >
+                  Previous
+                  </Button>
+                  <span>
+                     Page {currentPage} of {totalPages}
+                  </span>
+                  <Button
+                     onClick={handleNextPage}
+                     disabled= {currentPage === totalPages}
+                     className="ns-2"
+                  >
+                    Next
+                  </Button> 
+          </div>
+          </>
+        ) : ( 
+           <p>you don't have any Notes Yet</p>
+        )}
         </>
       )}
       {showAddNoteDialog && (
